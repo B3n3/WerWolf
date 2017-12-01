@@ -1,6 +1,9 @@
 import spark.ModelAndView;
 import spark.template.freemarker.FreeMarkerEngine;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,38 +13,53 @@ import static spark.Spark.get;
 import static spark.Spark.port;
 
 public class Main {
-    static private Stack<String> roles = new Stack<>();
-    static private Map<String, String> map = new HashMap<>();
-    static private int plaetze = 0;
-    private static int PORT = 8080;
+    private static Stack<String> roles = new Stack<>();
+    private static Map<String, String> map = new HashMap<>();
+    private static int plaetze = 0;
+    private static int PORT;
 
-    private static void initRoles() {
-        roles.push("Seherin");
-        roles.push("Amor");
-        roles.push("Jaeger");
-        roles.push("Buerger");
-        roles.push("Werwolf");
+    private static boolean initRoles(String playersFile) {
+        try (BufferedReader br = new BufferedReader(new FileReader(playersFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                roles.push(line);
+            }
+        } catch (IOException e) {
+            System.out.println("Error while reading: " + e.getMessage());
+            return false;
+        }
+
+        if (roles.size() == 0)
+            return false;
         Collections.shuffle(roles);
         plaetze = roles.size();
+        return true;
     }
 
     public static void main(String[] args) {
-        parsePort(args);
+        if (args.length != 2) {
+            System.out.println("Usage: WerWolf <port> <playersFile>");
+            return;
+        }
+
+        parsePort(args[0]);
+        if (!initRoles(args[1])) {
+            System.out.println("Won't start an empty game!");
+            return;
+        }
+
         System.out.println("Starting application on port " + PORT);
         port(PORT);
 
-        initRoles();
         handleRequests();
     }
 
-    private static void parsePort(String[] args) {
-        if (args.length == 1) {
-            try {
-                PORT = Integer.valueOf(args[0]);
-            } catch (NumberFormatException e) {
-                // Ignore parameter
-                System.out.println("Could not parse port: " + args[0]);
-            }
+    private static void parsePort(String arg) {
+        try {
+            PORT = Integer.valueOf(arg);
+        } catch (NumberFormatException e) {
+            // Ignore parameter
+            System.out.println("Could not parse port: " + arg);
         }
     }
 
