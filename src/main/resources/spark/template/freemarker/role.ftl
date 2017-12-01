@@ -261,6 +261,7 @@
 
                     <div class="form-title-row">
                         <h1 style="font-weight: bold">Deine Rolle ist: ${role}</h1>
+                        <p>${description}</p>
                     </div>
 
 
